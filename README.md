@@ -54,6 +54,15 @@ gpu-lol up
   Your code is at ~/sky_workdir/ on the pod
 ```
 
+Under the hood, gpu-lol just:
+
+- Detected training workload from your code ✅
+- Picked the right GPU for the exact VRAM requirement ✅
+- Selected the correct RunPod PyTorch image ✅
+- Routed across RunPod → Vast.ai → Lambda for cheapest price ✅
+- Synced your local repo to `~/sky_workdir/` on the pod ✅
+- Auto-installed Claude Code on the pod ✅
+
 No zip files. No JupyterLab. No manual installs.
 
 ## How it works
