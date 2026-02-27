@@ -168,6 +168,47 @@ To set your preferred template family:
 gpu-lol secrets set GPU_LOL_TEMPLATE_PATTERN=my_template_prefix
 ```
 
+## LLM integration
+
+gpu-lol uses an LLM to analyze your repo for smarter workload detection — understanding context like "this is QLoRA fine-tuning of a 70B model" rather than just counting imports.
+
+Configure any OpenAI-compatible endpoint:
+
+```bash
+gpu-lol secrets set GPU_LOL_LLM_URL=https://openrouter.ai/api/v1
+gpu-lol secrets set GPU_LOL_LLM_KEY=sk-or-yourkey
+gpu-lol secrets set GPU_LOL_LLM_MODEL=anthropic/claude-sonnet-4-6
+```
+
+Or use a local Ollama instance (no key needed):
+```bash
+gpu-lol secrets set GPU_LOL_LLM_URL=http://localhost:11434
+gpu-lol secrets set GPU_LOL_LLM_KEY=
+gpu-lol secrets set GPU_LOL_LLM_MODEL=llama3.2
+```
+
+To disable LLM and use heuristics only:
+```bash
+gpu-lol secrets set GPU_LOL_LLM_URL=
+```
+
+Without LLM, gpu-lol falls back to heuristics: package names, filenames, `from_pretrained()` calls, and known model sizes. It still works well for most projects.
+
+## Environment variables
+
+All config lives in `~/.gpu-lol/.env` (encrypted). You can set any key via `gpu-lol secrets set KEY=value`.
+
+| Variable | Description |
+|----------|-------------|
+| `RUNPOD_API_KEY` | RunPod API key (required) |
+| `VAST_API_KEY` | Vast.ai API key (optional) |
+| `LAMBDA_API_KEY` | Lambda Labs API key (optional) |
+| `HF_TOKEN` | HuggingFace token — auto-written to pod at launch |
+| `GPU_LOL_LLM_URL` | LLM endpoint (any OpenAI-compatible URL) |
+| `GPU_LOL_LLM_KEY` | LLM API key |
+| `GPU_LOL_LLM_MODEL` | LLM model name |
+| `GPU_LOL_TEMPLATE_PATTERN` | RunPod template name prefix to prefer |
+
 ## Providers
 
 gpu-lol uses [SkyPilot](https://skypilot.co) to automatically find the cheapest available GPU across:
