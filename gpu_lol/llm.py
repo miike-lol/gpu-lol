@@ -166,11 +166,12 @@ def _build_prompt(context: dict) -> str:
     parts.append("""
 Return ONLY valid JSON, no explanation:
 {
-  "workload_type": "training" | "inference" | "interactive",
-  "vram_required_gb": <integer, minimum GPU VRAM needed>,
-  "gpu_type": "RTX3090" | "RTX4090" | "A40" | "A6000" | "A100-SXM4" | "H100-SXM",
+  "workload_type": "training" | "inference" | "interactive" | "cpu-only",
+  "vram_required_gb": <integer, 0 if no GPU needed>,
+  "gpu_type": "RTX3090" | "RTX4090" | "A40" | "A6000" | "A100-SXM4" | "H100-SXM" | null,
   "reasoning": "<one sentence>"
-}""")
+}
+Use "cpu-only" and null gpu_type if the project has no ML/GPU workloads (e.g. trading bots, web scrapers, pure Python scripts).""")
     return "\n".join(parts)
 
 

@@ -116,7 +116,10 @@ def up(repo_path, name, gpu, provider, dry_run, no_validate, detach, template, g
 
     console.print(f"[green]✓[/green] Environment detected:")
     console.print(f"  Workload:  [bold]{spec.workload_type}[/bold]")
-    console.print(f"  GPU:       [bold]{spec.gpu_count}x {spec.gpu_type}[/bold] (needs {spec.vram_required_gb}GB VRAM)")
+    if spec.gpu_type:
+        console.print(f"  GPU:       [bold]{spec.gpu_count}x {spec.gpu_type}[/bold] (needs {spec.vram_required_gb}GB VRAM)")
+    else:
+        console.print(f"  GPU:       [bold]none (CPU-only)[/bold]")
     if autostop_hours:
         console.print(f"  Auto-stop: [bold]{autostop_hours}h[/bold] idle timeout")
     console.print(f"  Image:     [dim]{spec.base_image}[/dim]")
@@ -145,14 +148,17 @@ def up(repo_path, name, gpu, provider, dry_run, no_validate, detach, template, g
 
     # Step 2: Launch
     console.print(f"\n[bold blue]🚀 Launching cluster '{cluster_name}'...[/bold blue]")
-    console.print(f"  [dim]SkyPilot will find cheapest available {spec.gpu_type} across RunPod, Vast.ai, Lambda[/dim]\n")
+    if spec.gpu_type:
+        console.print(f"  [dim]SkyPilot will find cheapest available {spec.gpu_type} across RunPod, Vast.ai, Lambda[/dim]\n")
+    else:
+        console.print(f"  [dim]CPU-only — no GPU required[/dim]\n")
 
     # Show cost estimate and confirm
     gpu_costs = {
         "RTX3090": 0.22, "RTX4090": 0.34, "A40": 0.40,
         "A6000": 0.50, "A100-SXM4": 1.19, "H100-SXM": 2.49,
     }
-    cost_hr = gpu_costs.get(spec.gpu_type, 0.0) * spec.gpu_count
+    cost_hr = gpu_costs.get(spec.gpu_type or "", 0.0) * max(spec.gpu_count, 1)
     if cost_hr > 0:
         console.print(f"  [bold]Estimated cost:[/bold] ~${cost_hr:.2f}/hr", end="")
         if autostop_hours:
@@ -160,8 +166,12 @@ def up(repo_path, name, gpu, provider, dry_run, no_validate, detach, template, g
         else:
             console.print("")
     if not yes and not dry_run:
-        if not click.confirm(f"\n  Launch {spec.gpu_count}x {spec.gpu_type} @ ~${cost_hr:.2f}/hr?", default=True):
-            raise click.Abort()
+        if spec.gpu_type:
+            if not click.confirm(f"\n  Launch {spec.gpu_count}x {spec.gpu_type} @ ~${cost_hr:.2f}/hr?", default=True):
+                raise click.Abort()
+        else:
+            if not click.confirm(f"\n  Launch CPU-only pod?", default=True):
+                raise click.Abort()
 
     try:
         launcher.launch(spec, cluster_name, str(repo_path), detach=detach, autostop_hours=autostop_hours)

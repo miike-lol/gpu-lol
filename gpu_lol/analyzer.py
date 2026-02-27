@@ -100,6 +100,7 @@ class CodebaseAnalyzer:
         ("tensorflow",):     "tensorflow/tensorflow:2.15.0-gpu",
     }
     DEFAULT_IMAGE = "runpod/pytorch:1.0.3-cu1290-torch291-ubuntu2204"
+    CPU_IMAGE = "python:3.11-slim"
 
     def __init__(self, repo_path: str):
         self.repo_path = Path(repo_path).resolve()
@@ -143,21 +144,26 @@ class CodebaseAnalyzer:
         llm_reasoning = None
         if llm_result:
             workload = llm_result.get("workload_type", workload)
-            llm_vram = llm_result.get("vram_required_gb", vram)
-            vram = max(llm_vram, 8)  # floor: interactive pods always need some VRAM
-            # Only accept gpu_type if it's a known catalog value
-            valid_gpus = {g["skypilot_id"] for g in self.GPU_CATALOG}
-            llm_gpu = llm_result.get("gpu_type")
-            if llm_gpu in valid_gpus:
-                gpu = llm_gpu
-            else:
-                gpu = self._select_gpu(vram)  # recompute from validated vram
-            llm_gpu_count = llm_result.get("gpu_count")
-            if isinstance(llm_gpu_count, int) and llm_gpu_count > 1:
-                gpu_count = llm_gpu_count
             llm_reasoning = llm_result.get("reasoning")
             if llm_reasoning:
                 print(f"  LLM: {llm_reasoning}")
+            if workload == "cpu-only":
+                gpu = None
+                gpu_count = 0
+                vram = 0
+            else:
+                llm_vram = llm_result.get("vram_required_gb", vram)
+                vram = max(llm_vram, 8)  # floor: interactive pods always need some VRAM
+                # Only accept gpu_type if it's a known catalog value
+                valid_gpus = {g["skypilot_id"] for g in self.GPU_CATALOG}
+                llm_gpu = llm_result.get("gpu_type")
+                if llm_gpu in valid_gpus:
+                    gpu = llm_gpu
+                else:
+                    gpu = self._select_gpu(vram)  # recompute from validated vram
+                llm_gpu_count = llm_result.get("gpu_count")
+                if isinstance(llm_gpu_count, int) and llm_gpu_count > 1:
+                    gpu_count = llm_gpu_count
 
         image = _template_image or dockerfile_image or self._select_base_image(packages, workload)
         setup = self._build_setup_commands(packages)
@@ -425,6 +431,9 @@ class CodebaseAnalyzer:
           2. User's RunPod templates → fast boot from cached image
           3. Default runpod/pytorch image
         """
+        if workload == "cpu-only":
+            return self.CPU_IMAGE
+
         pkg_names = [p.split("==")[0].split(">=")[0].split("<=")[0].lower() for p in packages]
 
         if "tensorflow" in pkg_names or "tf-nightly" in pkg_names:
