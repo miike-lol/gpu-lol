@@ -117,7 +117,10 @@ def up(repo_path, name, gpu, provider, dry_run, no_validate, detach, template, g
     console.print(f"[green]✓[/green] Environment detected:")
     console.print(f"  Workload:  [bold]{spec.workload_type}[/bold]")
     if spec.gpu_type:
-        console.print(f"  GPU:       [bold]{spec.gpu_count}x {spec.gpu_type}[/bold] (needs {spec.vram_required_gb}GB VRAM)")
+        _gpu_vram = {"RTX3090": 24, "RTX4090": 24, "A40": 48, "A6000": 48, "A100-SXM4": 80, "H100-SXM": 80}
+        total_vram = _gpu_vram.get(spec.gpu_type, 0) * spec.gpu_count
+        vram_str = f"{total_vram}GB total" if spec.gpu_count > 1 else f"{spec.vram_required_gb}GB VRAM"
+        console.print(f"  GPU:       [bold]{spec.gpu_count}x {spec.gpu_type}[/bold] ({vram_str})")
     else:
         console.print(f"  GPU:       [bold]none (CPU-only)[/bold]")
     if autostop_hours:
