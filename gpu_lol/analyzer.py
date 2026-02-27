@@ -31,6 +31,15 @@ PACKAGE_TO_IMPORT = {
     "huggingface-hub": "huggingface_hub",
 }
 
+# Dev/test-only packages that should never be installed on a GPU pod
+DEV_PACKAGES = {
+    "pytest", "pytest-cov", "pytest-asyncio", "pytest-mock", "pytest-xdist",
+    "black", "ruff", "mypy", "flake8", "pylint", "isort", "autopep8", "pycodestyle",
+    "ipython", "ipykernel", "ipywidgets", "jupyter", "jupyterlab", "notebook",
+    "pre-commit", "tox", "nox", "coverage", "codecov",
+    "sphinx", "mkdocs", "pdoc",
+}
+
 # Critical ML packages — these get validated in smoke tests
 CRITICAL_ML_PACKAGES = {
     "torch", "tensorflow", "transformers", "datasets", "accelerate",
@@ -454,15 +463,30 @@ class CodebaseAnalyzer:
         """Build ordered setup commands for the pod."""
         cmds = ["pip install --upgrade pip --quiet"]
 
-        # Install from requirements file if it exists
-        if (self.repo_path / "requirements.txt").exists():
-            cmds.append("pip install -r ~/sky_workdir/requirements.txt --quiet")
+        # Packages already in the base PyTorch image — no need to reinstall
+        already_in_image = {"torch", "torchvision", "torchaudio", "numpy", "scipy"}
+
+        req_file = self.repo_path / "requirements.txt"
+        if req_file.exists():
+            # Parse and filter rather than blindly pip install -r
+            req_lines = []
+            for line in req_file.read_text().splitlines():
+                line = line.split("#")[0].strip()
+                if not line or line.startswith("-"):
+                    continue
+                pkg_name = line.split("==")[0].split(">=")[0].split("<=")[0].split("[")[0].lower().strip()
+                if pkg_name in DEV_PACKAGES or pkg_name in already_in_image:
+                    continue
+                req_lines.append(line)
+            if req_lines:
+                cmds.append(f"pip install {' '.join(req_lines[:50])} --quiet")
         elif packages:
-            # Filter out packages that are likely already in the base image
-            skip = {"torch", "torchvision", "torchaudio", "numpy", "scipy"}
-            to_install = [p for p in packages if p.split("==")[0].lower() not in skip]
+            to_install = [
+                p for p in packages
+                if p.split("==")[0].split(">=")[0].split("<=")[0].lower() not in DEV_PACKAGES | already_in_image
+            ]
             if to_install:
-                cmds.append(f"pip install {' '.join(to_install[:50])} --quiet")  # Cap at 50
+                cmds.append(f"pip install {' '.join(to_install[:50])} --quiet")
 
         # Always install claude-code — this is Mikey's workflow
         cmds.append("command -v node >/dev/null 2>&1 || (curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && apt-get install -y nodejs)")

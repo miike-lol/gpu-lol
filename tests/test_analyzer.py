@@ -134,11 +134,11 @@ def test_gpu_selection_by_vram():
 def test_setup_commands_include_requirements(tmp_path):
     from gpu_lol.analyzer import CodebaseAnalyzer
 
-    (tmp_path / "requirements.txt").write_text("torch\n")
+    (tmp_path / "requirements.txt").write_text("transformers>=4.36\n")
     analyzer = CodebaseAnalyzer(str(tmp_path))
-    cmds = analyzer._build_setup_commands(["torch"])
+    cmds = analyzer._build_setup_commands(["transformers"])
 
-    assert any("requirements.txt" in cmd for cmd in cmds)
+    assert any("transformers" in cmd for cmd in cmds)
     assert any("claude-code" in cmd for cmd in cmds)
 
 
