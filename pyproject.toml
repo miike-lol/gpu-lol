@@ -1,0 +1,47 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "gpu-lol"
+version = "0.1.0"
+description = "AI-powered GPU environment manager - spin up the right GPU for any ML project"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+keywords = ["gpu", "machine-learning", "cloud", "runpod", "skypilot", "cuda"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+dependencies = [
+    "click>=8.0",
+    "pyyaml>=6.0",
+    "rich>=13.0",
+    "skypilot[runpod,vast,lambda]>=0.6.0",
+    "tomli>=2.0; python_version < '3.11'",  # tomllib is stdlib in 3.11+
+]
+
+[project.scripts]
+gpu-lol = "gpu_lol.cli:cli"
+
+[project.optional-dependencies]
+mcp = ["mcp>=0.9"]
+all-providers = ["skypilot[all]"]
+dev = ["pytest>=7.0", "pytest-cov", "black", "ruff", "mypy"]
+
+[project.urls]
+Homepage = "https://github.com/miike-lol/gpu-lol"
+Repository = "https://github.com/miike-lol/gpu-lol"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.black]
+line-length = 100
+target-version = ["py310", "py311"]

@@ -1,0 +1,22 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Test / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local config (never commit credentials)
+.env
+.env.local
+.env.*.local
+.env.keys    # dotenvx private key — back up separately, never commit
+
+# OS
+.DS_Store
