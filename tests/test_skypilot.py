@@ -113,8 +113,8 @@ def test_yaml_envs_contain_workload():
     spec = make_spec(workload_type="inference")
     parsed = yaml.safe_load(launcher.generate_task_yaml(spec, "/tmp"))
 
-    assert parsed["envs"]["GPU_ROUTER_MANAGED"] == "1"
-    assert parsed["envs"]["GPU_ROUTER_WORKLOAD"] == "inference"
+    assert parsed["envs"]["GPU_LOL_MANAGED"] == "1"
+    assert parsed["envs"]["GPU_LOL_WORKLOAD"] == "inference"
 
 
 def test_yaml_name_from_spec():

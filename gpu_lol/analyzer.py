@@ -199,9 +199,11 @@ class CodebaseAnalyzer:
                 data = tomllib.loads(pyproject.read_text())
                 deps = data.get("project", {}).get("dependencies", [])
                 packages.update(deps)
-                # Also grab optional dependencies
+                # Also grab optional dependencies, but skip dev/test groups
                 opt_deps = data.get("project", {}).get("optional-dependencies", {})
-                for group_deps in opt_deps.values():
+                for group_name, group_deps in opt_deps.items():
+                    if group_name.lower() in ("dev", "test", "tests", "lint", "typing", "docs"):
+                        continue
                     if isinstance(group_deps, list):
                         packages.update(group_deps)
             except Exception:
@@ -486,7 +488,7 @@ class CodebaseAnalyzer:
         search_files = list(self.repo_path.rglob("*.py"))[:50]
         search_files += list(self.repo_path.rglob("*.sh"))[:10]
         for f in search_files:
-            if any(skip in str(f) for skip in [".venv", "__pycache__", "node_modules"]):
+            if any(skip in str(f) for skip in [".venv", "__pycache__", "node_modules", "tests/", "test_", "gpu_lol/"]):
                 continue
             try:
                 content = f.read_text(errors="ignore")

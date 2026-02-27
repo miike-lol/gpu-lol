@@ -65,8 +65,8 @@ class SkyPilotLauncher:
             # Keep cluster alive for interactive SSH use
             "run": "echo '✅ gpu-lol: environment ready' && sleep infinity",
             "envs": {
-                "GPU_ROUTER_MANAGED": "1",
-                "GPU_ROUTER_WORKLOAD": spec.workload_type,
+                "GPU_LOL_MANAGED": "1",
+                "GPU_LOL_WORKLOAD": spec.workload_type,
             }
         }
 
