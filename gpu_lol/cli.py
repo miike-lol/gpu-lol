@@ -81,6 +81,13 @@ def up(repo_path, name, gpu, provider, dry_run, no_validate, detach, template, g
 
     cluster_name = name or f"gr-{repo_path.name}-{int(time.time()) % 100000}"
 
+    # Ensure SkyPilot API server is running — silently start if not
+    if not dry_run:
+        try:
+            subprocess.run([_sky(), "api", "start"], capture_output=True, timeout=30)
+        except Exception:
+            pass
+
     # Step 1: Analyze
     console.print(f"\n[bold blue]🔍 Analyzing {repo_path.name}...[/bold blue]")
     analyzer = CodebaseAnalyzer(str(repo_path))
@@ -857,6 +864,20 @@ def secrets_init():
         hf_token_file.write_text(hf_token)
         hf_token_file.chmod(0o600)
         console.print(f"[green]✓[/green] HuggingFace configured  [dim](~/.cache/huggingface/token)[/dim]")
+
+    # Start SkyPilot API server so first launch doesn't fail
+    console.print("\n[dim]Starting SkyPilot API server...[/dim]")
+    try:
+        result = subprocess.run(
+            [_sky(), "api", "start"],
+            capture_output=True, text=True, timeout=30
+        )
+        if result.returncode == 0 or "already running" in (result.stdout + result.stderr).lower():
+            console.print(f"[green]✓[/green] SkyPilot API server ready")
+        else:
+            console.print(f"[yellow]⚠ SkyPilot API server: {result.stderr.strip()[:80]}[/yellow]")
+    except Exception as e:
+        console.print(f"[yellow]⚠ Could not start SkyPilot API server: {e}[/yellow]")
 
     console.print("\nRun [bold]gpu-lol secrets show[/bold] to verify, [bold]gpu-lol check[/bold] to test providers.\n")
 
