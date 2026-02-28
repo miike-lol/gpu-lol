@@ -129,7 +129,7 @@ class SkyPilotLauncher:
         """
         try:
             ssh_config = Path.home() / ".sky" / "generated" / "ssh" / cluster_name
-            if ssh_config.exists():
+            if ssh_config.is_file():
                 # Use sky's generated config — has correct port, key, and host
                 ssh_cmd = ["ssh", "-F", str(ssh_config), cluster_name, command]
             else:
@@ -166,7 +166,7 @@ class SkyPilotLauncher:
         ssh_config = Path.home() / ".sky" / "generated" / "ssh" / cluster_name
         # Parse port from sky's generated config
         port = 22
-        if ssh_config.exists():
+        if ssh_config.is_file():
             for line in ssh_config.read_text().splitlines():
                 if line.strip().startswith("Port "):
                     port = int(line.strip().split()[1])
@@ -175,7 +175,7 @@ class SkyPilotLauncher:
             "host": ip,
             "port": port,
             "user": "root",
-            "ssh_config": str(ssh_config) if ssh_config.exists() else None,
+            "ssh_config": str(ssh_config) if ssh_config.is_file() else None,
             "ssh_command": f"ssh -F {ssh_config} {cluster_name}" if ssh_config.exists() else f"ssh root@{ip}",
         }
 

@@ -939,7 +939,7 @@ def secrets_set(assignment):
     dotenvx = _dotenvx_bin()
     if dotenvx and _is_encrypted():
         result = subprocess.run(
-            [dotenvx, "set", "-f", str(ENV_FILE), f"{key}={value}"],
+            [dotenvx, "set", key, value, "-f", str(ENV_FILE)],
             capture_output=True, text=True,
         )
         if result.returncode == 0:
